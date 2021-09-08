@@ -12,7 +12,7 @@ class NoteResource(Resource):
             abort(404, error=f"Note with id={note_id} not found")
         if note.author != author:
             abort(403, error=f"Forbidden")
-        return note, 200
+        return note_schema.dump(note), 200
 
     @auth.login_required
     def put(self, note_id):
