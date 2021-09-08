@@ -89,12 +89,35 @@ class TestUsers(TestCase):
         pass
 
     def test_edit_user(self):
+        user_data = {
+            "username": 'admin',
+            'password': 'admin'
+        }
+        # user = UserModel(username=user_data['username'], password=user_data['password'])
+        user = UserModel(**user_data)
+        user.save()
+        user_id = user.id
+        response = self.client.put(f'/users/{user_id}')
+        data = json.loads(response.data)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(data["username"], user_data["username"])
+
         """
         Редактирование пользователя
         """
         pass
 
     def test_delete_user(self):
+        user_data = {
+            "username": 'admin',
+            'password': 'admin'
+        }
+        user = UserModel(**user_data)
+        user.save()
+        user_id = user.id
+        response = self.client.delete(f'/users/{user_id}')
+        data = json.loads(response.data)
+        self.assertEqual(response.status_code, 201)
         """
         Удаление пользователя
         """
@@ -139,6 +162,7 @@ class TestNotes(TestCase):
     def test_create_node(self):
         note_data = {
             "text": 'Test note 1',
+            "private": False
         }
         res = self.client.post('/notes',
                                headers=self.headers,
@@ -146,7 +170,7 @@ class TestNotes(TestCase):
                                content_type='application/json')
         data = json.loads(res.data)
         self.assertEqual(data["text"], note_data["text"])
-        self.assertTrue(data["private"])
+        self.assertFalse(data["private"])
 
     def test_get_notes(self):
         notes_data = [
@@ -237,6 +261,45 @@ class TestNotes(TestCase):
         """
         Удаление заметки
         """
+        notes_data = [
+            {
+                "text": 'Public Test note 1'
+            },
+            {
+                "text": 'Private Test note 2',
+            }
+        ]
+        ids = []
+        for note_data in notes_data:
+            note = NoteModel(author_id=self.user.id, **note_data)
+            note.save()
+            ids.append(note.id)
+
+        res = self.client.delete('/notes/2', headers=self.headers)
+        data = json.loads(res.data)
+        self.assertEqual(res.status_code, 201)
+        self.assertEqual(data["text"], notes_data[1]["text"])
+
+    def test_delete_notnote(self):
+        """
+        Удаление заметки
+        """
+        notes_data = [
+            {
+                "text": 'Public Test note 1'
+            },
+            {
+                "text": 'Private Test note 2',
+            }
+        ]
+        ids = []
+        for note_data in notes_data:
+            note = NoteModel(author_id=self.user.id, **note_data)
+            note.save()
+            ids.append(note.id)
+
+        res = self.client.delete('/notes/3', headers=self.headers)
+        self.assertEqual(res.status_code, 404)
 
     def tearDown(self):
         with self.app.app_context():

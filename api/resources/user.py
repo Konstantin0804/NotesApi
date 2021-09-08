@@ -1,4 +1,4 @@
-from api import Resource, abort, reqparse, auth
+from api import Resource, abort, reqparse, auth, db, g
 from api.models.user import UserModel
 from api.schemas.user import user_schema, users_schema
 
@@ -10,17 +10,28 @@ class UserResource(Resource):
             abort(404, error=f"User with id={user_id} not found")
         return user_schema.dump(user), 200
 
-    @auth.login_required
+    @auth.login_required(role="admin")
     def put(self, user_id):
         parser = reqparse.RequestParser()
         parser.add_argument("username", required=True)
         parser.add_argument("password")
         user_data = parser.parse_args()
         user = UserModel.query.get(user_id)
-        raise NotImplemented  # не реализовано!
+        if not user:
+            abort(404, error=f"User with id={user_id} not found")
+        user.username = user_data["username"]
+        user.password = user_data.get("password") or user.password
+        user.save()
+        return user_schema.dump(user), 201
 
     @auth.login_required
     def delete(self, user_id):
+        user = UserModel.query.get(user_id)
+        if user == g.user:
+            user_dict = user_schema.dump(user)
+            user.delete()
+            return user_dict, 200
+        return f"QNote with id {user_id} not found", 404
         raise NotImplemented  # не реализовано!
 
 
