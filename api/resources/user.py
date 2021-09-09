@@ -1,6 +1,8 @@
 from api import Resource, abort, reqparse, auth, db, g
 from api.models.user import UserModel
+from api.models.note import NoteModel
 from api.schemas.user import user_schema, users_schema
+from api.schemas.note import note_schema, notes_schema
 
 
 class UserResource(Resource):
@@ -14,25 +16,22 @@ class UserResource(Resource):
     def put(self, user_id):
         parser = reqparse.RequestParser()
         parser.add_argument("username", required=True)
-        parser.add_argument("password")
         user_data = parser.parse_args()
         user = UserModel.query.get(user_id)
-        if not user:
-            abort(404, error=f"User with id={user_id} not found")
         user.username = user_data["username"]
-        user.password = user_data.get("password") or user.password
         user.save()
-        return user_schema.dump(user), 201
+        return user_schema.dump(user), 200
 
     @auth.login_required
     def delete(self, user_id):
         user = UserModel.query.get(user_id)
-        if user == g.user:
-            user_dict = user_schema.dump(user)
-            user.delete()
-            return user_dict, 200
-        return f"QNote with id {user_id} not found", 404
-        raise NotImplemented  # не реализовано!
+        author_id = user_id
+        notes = NoteModel.query.get(author_id)
+        user_dict = user_schema.dump(user)
+        user.delete()
+        notes.delete()
+        return user_dict, 200
+
 
 
 class UsersListResource(Resource):
@@ -44,6 +43,7 @@ class UsersListResource(Resource):
         parser = reqparse.RequestParser()
         parser.add_argument("username", required=True)
         parser.add_argument("password", required=True)
+        parser.add_argument("role")
         user_data = parser.parse_args()
         user = UserModel(**user_data)
         user.save()

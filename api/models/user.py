@@ -15,9 +15,10 @@ class UserModel(db.Model):
                         server_default="false", nullable=False) # колонка у класса, которая будет говорить является ли юзер админов
     role = db.Column(db.String(32), default="simple_user", server_default="admin", nullable=False)
 
-    def __init__(self, username, password):
+    def __init__(self, username, password, role="admin"):
         self.username = username
         self.hash_password(password)
+        self.role = role
 
     def hash_password(self, password):
         self.password_hash = pwd_context.encrypt(password)
@@ -38,6 +39,10 @@ class UserModel(db.Model):
             db.session.commit()
         except IntegrityError:
             db.session.rollback()
+
+    def delete(self):
+        db.session.delete(self)
+        db.session.commit()
 
     @staticmethod
     def verify_auth_token(token):

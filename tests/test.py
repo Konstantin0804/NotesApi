@@ -115,13 +115,24 @@ class TestUsers(TestCase):
         user = UserModel(**user_data)
         user.save()
         user_id = user.id
+        notes_data = [
+            {
+                "text": 'Public Test note 1'
+            },
+            {
+                "text": 'Private Test note 2',
+            }
+        ]
+        ids = []
+        for note_data in notes_data:
+            note = NoteModel(author_id=user.id, **note_data)
+            note.save()
+            ids.append(note.id)
         response = self.client.delete(f'/users/{user_id}')
-        data = json.loads(response.data)
-        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.status_code, 200)
         """
         Удаление пользователя
         """
-        pass
 
     def tearDown(self):
         with self.app.app_context():
@@ -277,7 +288,7 @@ class TestNotes(TestCase):
 
         res = self.client.delete('/notes/2', headers=self.headers)
         data = json.loads(res.data)
-        self.assertEqual(res.status_code, 201)
+        self.assertEqual(res.status_code, 200)
         self.assertEqual(data["text"], notes_data[1]["text"])
 
     def test_delete_notnote(self):
