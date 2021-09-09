@@ -1,10 +1,16 @@
-from api import auth, abort, g, Resource, reqparse, db
+from api import auth, abort, g, Resource, reqparse
 from api.models.note import NoteModel
-from api.schemas.note import note_schema, notes_schema
+from api.schemas.note import note_schema, notes_schema, NoteSchema, NoteRequestSchema
+from flask_apispec.views import MethodResource
+from flask_apispec import marshal_with, use_kwargs, doc
+from webargs import fields
 
 
-class NoteResource(Resource):
+@doc(tags=['Notes'])
+class NoteResource(MethodResource):
     @auth.login_required
+    @doc(description='Get notes by user id')
+    @marshal_with(NoteSchema)
     def get(self, note_id):
         author = g.user
         note = NoteModel.query.get(note_id)
@@ -12,14 +18,15 @@ class NoteResource(Resource):
             abort(404, error=f"Note with id={note_id} not found")
         if note.author != author:
             abort(403, error=f"Forbidden")
-        return note_schema.dump(note), 200
+        return note, 200
 
+    # FIXME Fix put like put in users
     @auth.login_required
     def put(self, note_id):
         author = g.user
         parser = reqparse.RequestParser()
         parser.add_argument("text", required=True)
-        parser.add_argument("private", type=bool) #чтобы не передовался тип приватности в виде строки
+        parser.add_argument("private", type=bool)  # чтобы не передовался тип приватности в виде строки
         note_data = parser.parse_args()
         note = NoteModel.query.get(note_id)
         if not note:
@@ -39,10 +46,13 @@ class NoteResource(Resource):
         note.delete()
         return note_dict, 200
 
-
-class NotesListResource(Resource):
+@doc(tags=['Notes'])
+class NotesListResource(MethodResource):
+    @auth.login_required
+    @doc(security=[{"basicAuth": []}])
     def get(self):
-        notes = NoteModel.query.all()
+        author = g.user
+        notes = NoteModel.query.filter_by(author_id=author.id)
         return notes_schema.dump(notes), 200
 
     @auth.login_required
@@ -55,4 +65,3 @@ class NotesListResource(Resource):
         note = NoteModel(author_id=author.id, **note_data)
         note.save()
         return note_schema.dump(note), 201
-

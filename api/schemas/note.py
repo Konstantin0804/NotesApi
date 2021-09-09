@@ -18,3 +18,12 @@ class NoteSchema(ma.SQLAlchemySchema):
 
 note_schema = NoteSchema()
 notes_schema = NoteSchema(many=True)
+
+class NoteRequestSchema(ma.SQLAlchemySchema):
+   class Meta:
+       model = NoteModel
+
+   id = ma.Str()
+   test = ma.Str()
+   author = ma.Str()
+   private = ma.Str()
