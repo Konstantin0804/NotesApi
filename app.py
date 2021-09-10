@@ -25,8 +25,11 @@ api.add_resource(NotesListResource,
 api.add_resource(NoteResource,
                  '/notes/<int:note_id>',  # GET, PUT, DELETE
                  )
-api.add_resource(TagsListResource,
+api.add_resource(TagsListResource,  #GET, POST
                  '/tags'
+                 )
+api.add_resource(TagsResource,  # GET
+                 '/tags/<int:tag_id>'
                  )
 
 docs.register(UserResource)
@@ -34,5 +37,6 @@ docs.register(UsersListResource)
 docs.register(NoteResource)
 docs.register(NotesListResource)
 docs.register(TagsListResource)
+docs.register(TagsResource)
 if __name__ == '__main__':
     app.run(debug=Config.DEBUG, port=Config.PORT)
