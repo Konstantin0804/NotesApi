@@ -38,7 +38,7 @@ class UserResource(MethodResource):
 
 
     @auth.login_required(role="admin")
-    @doc(description='Edit user by id')
+    @doc(description='Edit user by id', security=[{"basicAuth": []}], summary="Edit user")
     @marshal_with(UserSchema)
     @use_kwargs({"username": fields.Str()})
     def put(self, user_id, **kwargs):
@@ -48,9 +48,9 @@ class UserResource(MethodResource):
         return user, 200
 
 
-    @auth.login_required
+    @auth.login_required(role="admin")
     @marshal_with(UserSchema)
-    @doc(description='Delete user by id')
+    @doc(description='Delete user by id', security=[{"basicAuth": []}], summary="Delete user")
     def delete(self, user_id):
         user = UserModel.query.get(user_id)
         author_id = user_id
@@ -64,12 +64,14 @@ class UserResource(MethodResource):
 @doc(tags=['Users'])
 class UsersListResource(MethodResource):
     @marshal_with(UserSchema(many=True))
+    @doc(description='Get all users', summary="Get users")
     def get(self):
         users = UserModel.query.all()
         return users, 200
 
     @use_kwargs(UserRequestSchema, location='json')
     @marshal_with(UserSchema)
+    @doc(description='Post new user', summary="Post users")
     def post(self, **kwargs):
         user = UserModel(**kwargs)
         user.save()

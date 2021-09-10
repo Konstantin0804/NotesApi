@@ -22,6 +22,8 @@ class NoteResource(MethodResource):
 
     # FIXME Fix put like put in users
     @auth.login_required
+    @doc(security=[{"basicAuth": []}])
+    @marshal_with(NoteSchema)
     def put(self, note_id):
         author = g.user
         parser = reqparse.RequestParser()
@@ -36,8 +38,10 @@ class NoteResource(MethodResource):
         note.text = note_data["text"]
         note.private = note_data.get("private") or note.private
         note.save()
-        return note_schema.dump(note), 200
+        return note, 200
 
+    @auth.login_required
+    @doc(security=[{"basicAuth": []}])
     def delete(self, note_id):
         note = NoteModel.query.get(note_id)
         if not note:
@@ -49,19 +53,23 @@ class NoteResource(MethodResource):
 @doc(tags=['Notes'])
 class NotesListResource(MethodResource):
     @auth.login_required
-    @doc(security=[{"basicAuth": []}])
+    @doc(description="Get user's notes", security=[{"basicAuth": []}], summary="Get notes")
+    @marshal_with(NoteSchema(many=True))
     def get(self):
         author = g.user
         notes = NoteModel.query.filter_by(author_id=author.id)
-        return notes_schema.dump(notes), 200
+        return notes, 200
 
     @auth.login_required
-    def post(self):
+    @doc(description="Post new note", security=[{"basicAuth": []}], summary="Post notes")
+    @use_kwargs({"text": fields.Str(), "private": fields.Boolean()})
+    @marshal_with(NoteSchema)
+    def post(self, **kwargs):
         author = g.user
-        parser = reqparse.RequestParser()
-        parser.add_argument("text", required=True)
-        parser.add_argument("private", type=bool)
-        note_data = parser.parse_args()
-        note = NoteModel(author_id=author.id, **note_data)
+        #parser = reqparse.RequestParser()
+        #parser.add_argument("text", required=True)
+        #parser.add_argument("private", type=bool)
+        #note_data = parser.parse_args()
+        note = NoteModel(author_id=author.id, **kwargs)
         note.save()
-        return note_schema.dump(note), 201
+        return note, 201

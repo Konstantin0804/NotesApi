@@ -23,7 +23,5 @@ class NoteRequestSchema(ma.SQLAlchemySchema):
    class Meta:
        model = NoteModel
 
-   id = ma.Str()
-   test = ma.Str()
-   author = ma.Str()
+   text = ma.Str()
    private = ma.Str()
