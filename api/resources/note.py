@@ -122,5 +122,5 @@ class NotesPublicUserResource(MethodResource):
     @marshal_with(NoteSchema(many=True), code=200)
     @use_kwargs({"username": fields.Str()}, location='query')
     def get(self, **kwargs):
-        notes = NoteModel.query.filter(NoteModel.author.has(username=kwargs["username"])) #
+        notes = NoteModel.query.filter(NoteModel.author.has(username=kwargs["username"]), NoteModel.private==(False)) #
         return notes, 200
