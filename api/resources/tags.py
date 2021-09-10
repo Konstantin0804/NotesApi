@@ -15,6 +15,28 @@ class TagsResource(MethodResource):
             abort(404, error=f"Tag with id={tag_id} not found")
         return tag, 200
 
+    @auth.login_required
+    @doc(description='Edit tags by id', security=[{"basicAuth": []}], summary="Edit tags")
+    @marshal_with(TagSchema)
+    @use_kwargs({"name": fields.Str()})
+    def put(self, tag_id, **kwargs):
+        tag = TagModel.query.get(tag_id)
+        tag.name = kwargs["name"]
+        tag.save()
+        return tag, 200
+
+    @auth.login_required
+    @doc(security=[{"basicAuth": []}], description='Delete tags by id', summary="Delete tags")
+    @marshal_with(TagSchema)
+    def delete(self, tag_id):
+        author = g.user
+        tag = TagModel.query.get(tag_id)
+        if not tag:
+            abort(404, error=f"Tag with id:{tag_id} not found")
+        #note_dict = note_schema.dump(note)
+        tag.delete()
+        return tag, 200
+
 
 @doc(tags=['Tags'])
 class TagsListResource(MethodResource):

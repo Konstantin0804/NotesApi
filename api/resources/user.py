@@ -52,8 +52,10 @@ class UserResource(MethodResource):
     @marshal_with(UserSchema)
     @doc(description='Delete user by id', security=[{"basicAuth": []}], summary="Delete user")
     def delete(self, user_id):
-        user = UserModel.query.get(user_id)
         author_id = user_id
+        user = UserModel.query.get(user_id)
+        if not user:
+            abort(400, error=f"User with user id:{user_id} not exist")
         notes = NoteModel.query.get(author_id)
         user_dict = user_schema.dump(user)
         user.delete()
