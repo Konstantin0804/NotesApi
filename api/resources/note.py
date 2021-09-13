@@ -92,7 +92,8 @@ class NotesPublicResource(MethodResource):
 @doc(tags=['NotesTags'])
 #put /notes/<note_id>/tags
 class NotesAddTagResource(MethodResource):
-    @doc(description="Put tags to note", summary="Put tags to notes")
+    @auth.login_required
+    @doc(description="Put tags to note", security=[{"basicAuth": []}], summary="Put tags to notes")
     @use_kwargs({"tags": fields.List(fields.Int())}, location="json")
     @marshal_with(NoteSchema, code=200)
     def put(self, note_id, **kwargs):
@@ -100,6 +101,18 @@ class NotesAddTagResource(MethodResource):
         for tag_id in kwargs["tags"]:
             tag = TagModel.query.get(tag_id)
             note.tags.append(tag)
+        note.save()
+        return note, 200
+
+    @auth.login_required
+    @doc(description="Delete tags from notes", security=[{"basicAuth": []}], summary="Delete tags from notes")
+    @use_kwargs({"tags": fields.List(fields.Int())}, location="json")
+    @marshal_with(NoteSchema, code=200)
+    def delete(self, note_id, **kwargs):
+        note = NoteModel.query.get(note_id)
+        for tag_id in kwargs["tags"]:
+            tag = TagModel.query.get(tag_id)
+            note.tags.remove(tag)
         note.save()
         return note, 200
 

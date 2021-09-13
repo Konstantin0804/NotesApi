@@ -29,7 +29,7 @@ class TagsResource(MethodResource):
     @doc(security=[{"basicAuth": []}], description='Delete tags by id', summary="Delete tags")
     @marshal_with(TagSchema)
     def delete(self, tag_id):
-        author = g.user
+        #author = g.user
         tag = TagModel.query.get(tag_id)
         if not tag:
             abort(404, error=f"Tag with id:{tag_id} not found")
