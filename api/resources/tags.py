@@ -46,11 +46,13 @@ class TagsListResource(MethodResource):
         tags = TagModel.query.all()
         return tags, 200
 
+    @auth.login_required
     @use_kwargs({"name": fields.Str()})
     @marshal_with(TagSchema)
-    @doc(description='Post new tags', summary="Post Tags")
+    @doc(security=[{"basicAuth": []}], description='Post new tags', summary="Post Tags")
     def post(self, **kwargs):
-        tag = TagModel(**kwargs)
+        author = g.user
+        tag = TagModel(author=author, **kwargs)
         tag.save()
         return tag, 201
 

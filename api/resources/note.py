@@ -1,6 +1,5 @@
 from api import auth, abort, g, Resource, reqparse
 from api.models.note import NoteModel
-from api.models.user import UserModel
 from api.models.tags import TagModel
 from api.schemas.note import note_schema, notes_schema, NoteSchema, NoteRequestSchema
 from flask_apispec.views import MethodResource
@@ -45,7 +44,8 @@ class NoteResource(MethodResource):
         return note, 200
 
     @auth.login_required
-    @doc(security=[{"basicAuth": []}], description='Delete users notes by note id', summary="Delete notes")
+    @marshal_with(NoteSchema)
+    @doc(security=[{"basicAuth": []}], description='Archive users notes by note id', summary="Archive notes")
     def delete(self, note_id):
         author = g.user
         note = NoteModel.query.get(note_id)
@@ -53,9 +53,27 @@ class NoteResource(MethodResource):
             abort(404, error=f"Note with id:{note_id} not found")
         if note.author != author:
             abort(403, error=f"Forbidden")
-        note_dict = note_schema.dump(note)
         note.delete()
-        return note_dict, 200
+        note.save()
+        return note, 200
+
+@doc(tags=['Notes'])
+class NoteRestoreResource(MethodResource):
+    @auth.login_required
+    @marshal_with(NoteSchema)
+    @doc(security=[{"basicAuth": []}], description='Restore users notes by note id', summary="Restore notes")
+    def put(self, note_id):
+        author = g.user
+        note = NoteModel.query.get(note_id)
+        if not note:
+            abort(404, error=f"Note with id:{note_id} not found")
+        if note.author != author:
+            abort(403, error=f"Forbidden")
+        if note.archive:
+            note.restore()
+        else:
+            return {}, 304
+        return note, 200
 
 @doc(tags=['Notes'])
 class NotesListResource(MethodResource):

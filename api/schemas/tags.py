@@ -14,6 +14,7 @@ class TagSchema(ma.SQLAlchemySchema):
 
     id = ma.auto_field()
     name = ma.auto_field()
+    author = ma.auto_field()
 
 #class UserRequestSchema(ma.SQLAlchemySchema):
 #  class Meta:

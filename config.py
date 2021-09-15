@@ -10,7 +10,6 @@ security_definitions = {
     }
 }
 
-
 class Config:
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:///' + os.path.join(base_dir, 'base.db')
     TEST_DATABASE_URI = 'sqlite:///' + os.path.join(base_dir, 'test.db')
