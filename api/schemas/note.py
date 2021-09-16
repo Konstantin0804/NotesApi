@@ -21,9 +21,19 @@ class NoteSchema(ma.SQLAlchemySchema):
 note_schema = NoteSchema()
 notes_schema = NoteSchema(many=True)
 
-class NoteRequestSchema(ma.SQLAlchemySchema):
+class NoteCreateSchema(ma.SQLAlchemySchema):
    class Meta:
        model = NoteModel
 
    text = ma.Str()
    private = ma.Str()
+
+class NoteEditSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = NoteModel
+    text = ma.auto_field(required=False)
+    private = ma.auto_field(required=False)
+
+class NoteFilterchema(ma.SQLAlchemyAutoSchema):
+    private = ma.Boolean(required=False)
+    tag = ma.String(required=False)

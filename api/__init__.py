@@ -10,7 +10,7 @@ from apispec import APISpec
 from apispec.ext.marshmallow import MarshmallowPlugin
 from flask_apispec.extension import FlaskApiSpec
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder=Config.UPLOAD_FOLDER)
 app.config.from_object(Config)
 
 api = Api(app)

@@ -1,30 +1,36 @@
-from api import auth, abort, g, Resource, reqparse
+from api import auth, abort, g, Resource, reqparse, api
 from api.models.note import NoteModel
 from api.models.tags import TagModel
-from api.schemas.note import note_schema, notes_schema, NoteSchema, NoteRequestSchema
+from api.schemas.note import note_schema, notes_schema, NoteSchema, NoteEditSchema, NoteCreateSchema, NoteFilterchema
 from flask_apispec.views import MethodResource
 from flask_apispec import marshal_with, use_kwargs, doc
 from webargs import fields
+from sqlalchemy.orm.exc import NoResultFound
 
 
 @doc(tags=['Notes'])
+@api.resource('/notes/<int:note_id>') # вместо добавления этого обработчика в app.py можно делать так: через декоратор
 class NoteResource(MethodResource):
     @auth.login_required
-    @doc(description='Get notes by user id', summary="Get notes")
+    @doc(description='Get notes by note id', summary="Get notes")
     @marshal_with(NoteSchema)
     def get(self, note_id):
         author = g.user
-        note = NoteModel.query.get(note_id)
-        if not note:
+        try:
+            note = NoteModel.get_all_for_user(author).filter_by(id=note_id).one()
+            return note, 200
+        except NoResultFound:
             abort(404, error=f"Note with id={note_id} not found")
-        if note.author != author:
-            abort(403, error=f"Forbidden")
-        return note, 200
+        #if note.author != author:
+        #    abort(403, error=f"Forbidden")
+        #if note.archive == True:
+        #    abort(404, error=f"Note with id={note_id} was deleted")
+
 
     @auth.login_required
     @doc(security=[{"basicAuth": []}], description='Edit users notes by note id', summary="Edit notes")
     @marshal_with(NoteSchema)
-    @use_kwargs({"text": fields.Str(), "private": fields.Boolean()})
+    @use_kwargs(NoteEditSchema)
     def put(self, note_id, **kwargs):
         author = g.user
         #parser = reqparse.RequestParser()
@@ -32,8 +38,10 @@ class NoteResource(MethodResource):
         #parser.add_argument("private", type=bool)  # чтобы не передовался тип приватности в виде строки
         #note_data = parser.parse_args()
         note = NoteModel.query.get(note_id)
-        note.text = kwargs["text"]
-        note.private = kwargs["private"]
+        if kwargs.get("text") is not None:
+            note.text = kwargs["text"]
+        if kwargs.get("private") is not None:
+            note.private = kwargs["private"]
         if not note:
             abort(404, error=f"note {note_id} not found")
         if note.author != author:
@@ -75,19 +83,25 @@ class NoteRestoreResource(MethodResource):
             return {}, 304
         return note, 200
 
+@api.resource('/notes')
 @doc(tags=['Notes'])
 class NotesListResource(MethodResource):
     @auth.login_required
     @doc(description="Get user's notes", security=[{"basicAuth": []}], summary="Get notes")
     @marshal_with(NoteSchema(many=True))
-    def get(self):
+    @use_kwargs(NoteFilterchema, location='query')
+    def get(self, **kwargs):
         author = g.user
-        notes = NoteModel.query.filter_by(author_id=author.id)
+        notes = NoteModel.get_all_for_user(author)
+        if kwargs.get("tag") is not None:
+            notes = notes.filter(NoteModel.tags.any(name=kwargs['tag']))
+        if kwargs.get("private") is not None:
+            notes = notes.filter_by(private=kwargs['private'])
         return notes, 200
 
     @auth.login_required
     @doc(description="Post new note", security=[{"basicAuth": []}], summary="Post notes")
-    @use_kwargs({"text": fields.Str(), "private": fields.Boolean()})
+    @use_kwargs(NoteCreateSchema)
     @marshal_with(NoteSchema)
     def post(self, **kwargs):
         author = g.user
@@ -104,7 +118,7 @@ class NotesPublicResource(MethodResource):
     @doc(description="Get all public notes", summary="Public notes")
     @marshal_with(NoteSchema(many=True))
     def get(self):
-        notes = NoteModel.query.filter_by(private=0)
+        notes = NoteModel.query.filter_by(private=0).filter_by(archive=False)
         return notes, 200
 
 @doc(tags=['NotesTags'])
@@ -135,23 +149,24 @@ class NotesAddTagResource(MethodResource):
         return note, 200
 
 
-@doc(tags=['Notes'])
-class NotesFilterResource(MethodResource):
-    @auth.login_required
-    @doc(description="Get all notes by tags", security=[{"basicAuth": []}], summary="Tags filter")
-    @marshal_with(NoteSchema(many=True), code=200)
-    @use_kwargs({"tag": fields.Str()}, location='query')
-    def get(self, **kwargs):
-        notes = NoteModel.query.filter(NoteModel.tags.any(name=kwargs["tag"])) #ANY выбирает все тэги которые подходят по д жтот фильтр
-        return notes, 200
+#@doc(tags=['Notes'])
+#class NotesFilterResource(MethodResource):
+#    @auth.login_required
+#    @doc(description="Get all notes by tags", security=[{"basicAuth": []}], summary="Tags filter")
+#    @marshal_with(NoteSchema(many=True), code=200)
+#    @use_kwargs({"tag": fields.Str()}, location='query')
+#    def get(self, **kwargs):
+#        notes = NoteModel.query.filter(NoteModel.tags.any(name=kwargs["tag"])) #ANY выбирает все тэги которые подходят по д жтот фильтр
+#        return notes, 200
 
 
 #/notes/public/filter?username=<un>
-@doc(tags=['Notes'])
-class NotesPublicUserResource(MethodResource):
-    @doc(description="Get all public notes by users", summary="Public notes by user")
-    @marshal_with(NoteSchema(many=True), code=200)
-    @use_kwargs({"username": fields.Str()}, location='query')
-    def get(self, **kwargs):
-        notes = NoteModel.query.filter(NoteModel.author.has(username=kwargs["username"]), NoteModel.private==(False)) #
-        return notes, 200
+#@doc(tags=['Notes'])
+#class NotesPublicUserResource(MethodResource):
+#    @doc(description="Get all public notes by users", summary="Public notes by user")
+#    @marshal_with(NoteSchema(many=True), code=200)
+#    @use_kwargs({"username": fields.Str()}, location='query')
+#    def get(self, **kwargs):
+#        notes = NoteModel.query.filter(NoteModel.author.has(username=kwargs["username"]), NoteModel.private==(False)) #
+#        return notes, 200
+

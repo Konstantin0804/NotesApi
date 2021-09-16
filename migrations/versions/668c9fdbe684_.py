@@ -7,7 +7,7 @@ Create Date: 2021-09-15 16:45:01.903260
 """
 from alembic import op
 import sqlalchemy as sa
-
+from sqlalchemy.sql import expression
 
 # revision identifiers, used by Alembic.
 revision = '668c9fdbe684'
@@ -22,7 +22,7 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('username', sa.String(length=32), nullable=True),
     sa.Column('password_hash', sa.String(length=128), nullable=True),
-    sa.Column('is_staff', sa.Boolean(), server_default='false', nullable=False),
+    sa.Column('is_staff', sa.Boolean(), server_default=expression.false(), nullable=False),
     sa.Column('role', sa.String(length=32), server_default='admin', nullable=False),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('username')
@@ -31,8 +31,8 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('author_id', sa.Integer(), nullable=True),
     sa.Column('text', sa.String(length=255), nullable=False),
-    sa.Column('private', sa.Boolean(), server_default='true', nullable=False),
-    sa.Column('archive', sa.Boolean(), server_default='false', nullable=False),
+    sa.Column('private', sa.Boolean(), server_default=expression.true(), nullable=False),
+    sa.Column('archive', sa.Boolean(), server_default=expression.false(), nullable=False),
     sa.ForeignKeyConstraint(['author_id'], ['user_model.id'], ),
     sa.PrimaryKeyConstraint('id')
     )

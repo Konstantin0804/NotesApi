@@ -9,6 +9,7 @@ security_definitions = {
         "type": "basic"
     }
 }
+ma_plugin = MarshmallowPlugin()
 
 class Config:
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:///' + os.path.join(base_dir, 'base.db')
@@ -24,10 +25,12 @@ class Config:
     APISPEC_SPEC = APISpec(
         title='Notes Project',
         version='v1',
-        plugins=[MarshmallowPlugin()],
+        plugins=[ma_plugin],
         securityDefinitions=security_definitions,
         security=[],
         openapi_version='2.0.0'
     )
     APISPEC_SWAGGER_URL = '/swagger'  # URI API Doc JSON
     APISPEC_SWAGGER_UI_URL = '/swagger-ui/'  # URI UI of API Doc
+    UPLOAD_FOLDER_NAME = 'upload'
+    UPLOAD_FOLDER = os.path.join(base_dir, UPLOAD_FOLDER_NAME)

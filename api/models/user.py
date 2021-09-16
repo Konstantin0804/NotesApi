@@ -3,6 +3,7 @@ from passlib.apps import custom_app_context as pwd_context
 from itsdangerous import (TimedJSONWebSignatureSerializer
                           as Serializer, BadSignature, SignatureExpired)
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.sql import expression
 
 
 class UserModel(db.Model):
@@ -12,7 +13,7 @@ class UserModel(db.Model):
     notes = db.relationship('NoteModel', backref='author', lazy='dynamic')
     # FIXME: server_default=False
     is_staff = db.Column(db.Boolean(), default=False,
-                        server_default="false", nullable=False) # колонка у класса, которая будет говорить является ли юзер админов
+                        server_default=expression.false(), nullable=False) # колонка у класса, которая будет говорить является ли юзер админов
     role = db.Column(db.String(32), default="simple_user", server_default="admin", nullable=False)
 
     def __init__(self, username, password, role="admin"):
