@@ -1,6 +1,7 @@
 from api import auth, abort, g, Resource, reqparse, api
 from api.models.note import NoteModel
 from api.models.tags import TagModel
+from api.models.user import UserModel
 from api.schemas.note import note_schema, notes_schema, NoteSchema, NoteEditSchema, NoteCreateSchema, NoteFilterchema
 from flask_apispec.views import MethodResource
 from flask_apispec import marshal_with, use_kwargs, doc
@@ -21,7 +22,7 @@ class NoteResource(MethodResource):
             note = NoteModel.get_all_for_user(author).filter_by(id=note_id).one()
             return note, 200
         except NoResultFound:
-            abort(404, error=_("Note with id=%(note_id)s not found", note_id=note_id)) #так оборачивается для перевода с помощью babel
+            abort(400, error=_("Note with id=%(note_id)s not found", note_id=note_id)) #так оборачивается для перевода с помощью babel
 
 
     @auth.login_required
@@ -36,7 +37,7 @@ class NoteResource(MethodResource):
         if kwargs.get("private") is not None:
             note.private = kwargs["private"]
         if not note:
-            abort(404, error=f"note {note_id} not found")
+            abort(400, error=f"note {note_id} not found")
         if note.author != author:
             abort(403, error=f"Forbidden")
         #note.text = note_data["text"]
@@ -51,7 +52,7 @@ class NoteResource(MethodResource):
         author = g.user
         note = NoteModel.query.get(note_id)
         if not note:
-            abort(404, error=f"Note with id:{note_id} not found")
+            abort(400, error=f"Note with id:{note_id} not found")
         if note.author != author:
             abort(403, error=f"Forbidden")
         note.delete()
@@ -68,7 +69,7 @@ class NoteRestoreResource(MethodResource):
         author = g.user
         note = NoteModel.query.get(note_id)
         if not note:
-            abort(404, error=f"Note with id:{note_id} not found")
+            abort(400, error=f"Note with id:{note_id} not found")
         if note.author != author:
             abort(403, error=f"Forbidden")
         if note.archive:
@@ -145,6 +146,16 @@ class NotesAddTagResource(MethodResource):
             note.tags.remove(tag)
         note.save()
         return note, 200
+
+@api.resource('/users/<int:user_id>/notes')
+@doc(tags=['Notes'])
+class NotesListByAuthorResource(MethodResource):
+    @doc(description="Get notes by users", summary="Get notes by users")
+    @marshal_with(NoteSchema(many=True))
+    def get(self, user_id):
+        UserModel.query.get_or_404(user_id, description="User not found") # Если будет введено не корректное user_id будет возвращена ошибка 404
+        notes = NoteModel.query.filter_by(author_id=user_id).filter_by(private=0).filter_by(archive=False).all()
+        return notes, 200
 
 
 #@doc(tags=['Notes'])

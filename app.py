@@ -1,5 +1,5 @@
 from api import api, app, docs
-from api.resources.note import NoteResource, NotesListResource, NotesPublicResource, NotesAddTagResource,  NoteRestoreResource
+from api.resources.note import NoteResource, NotesListResource, NotesPublicResource, NotesAddTagResource,  NoteRestoreResource, NotesListByAuthorResource
 from api.resources.user import UserResource, UsersListResource, UserFilterResource
 from api.resources.tags import TagsResource, TagsListResource
 from api.resources.file import UploadPictureResource
@@ -24,6 +24,7 @@ docs.register(UserFilterResource)
 docs.register(NoteResource)
 docs.register(NoteRestoreResource)
 docs.register(NotesListResource)
+docs.register(NotesListByAuthorResource)
 docs.register(TagsListResource)
 docs.register(TagsResource)
 docs.register(NotesPublicResource)
