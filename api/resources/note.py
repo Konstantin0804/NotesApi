@@ -6,6 +6,7 @@ from flask_apispec.views import MethodResource
 from flask_apispec import marshal_with, use_kwargs, doc
 from webargs import fields
 from sqlalchemy.orm.exc import NoResultFound
+from flask_babel import _
 
 
 @doc(tags=['Notes'])
@@ -20,11 +21,7 @@ class NoteResource(MethodResource):
             note = NoteModel.get_all_for_user(author).filter_by(id=note_id).one()
             return note, 200
         except NoResultFound:
-            abort(404, error=f"Note with id={note_id} not found")
-        #if note.author != author:
-        #    abort(403, error=f"Forbidden")
-        #if note.archive == True:
-        #    abort(404, error=f"Note with id={note_id} was deleted")
+            abort(404, error=_("Note with id=%(note_id) not found", note_id=note_id)) #так оборачивается для перевода с помощью babel
 
 
     @auth.login_required
@@ -33,10 +30,6 @@ class NoteResource(MethodResource):
     @use_kwargs(NoteEditSchema)
     def put(self, note_id, **kwargs):
         author = g.user
-        #parser = reqparse.RequestParser()
-        #parser.add_argument("text", required=True)
-        #parser.add_argument("private", type=bool)  # чтобы не передовался тип приватности в виде строки
-        #note_data = parser.parse_args()
         note = NoteModel.query.get(note_id)
         if kwargs.get("text") is not None:
             note.text = kwargs["text"]
@@ -66,6 +59,7 @@ class NoteResource(MethodResource):
         return note, 200
 
 @doc(tags=['Notes'])
+@api.resource('/notes/<int:note_id>')
 class NoteRestoreResource(MethodResource):
     @auth.login_required
     @marshal_with(NoteSchema)
@@ -113,6 +107,7 @@ class NotesListResource(MethodResource):
         note.save()
         return note, 201
 
+@api.resource('/notes/public')
 @doc(tags=['Notes'])
 class NotesPublicResource(MethodResource):
     @doc(description="Get all public notes", summary="Public notes")
@@ -121,17 +116,22 @@ class NotesPublicResource(MethodResource):
         notes = NoteModel.query.filter_by(private=0).filter_by(archive=False)
         return notes, 200
 
+@api.resource('/notes/<note_id>/tags')
 @doc(tags=['NotesTags'])
-#put /notes/<note_id>/tags
 class NotesAddTagResource(MethodResource):
     @auth.login_required
     @doc(description="Put tags to note", security=[{"basicAuth": []}], summary="Put tags to notes")
     @use_kwargs({"tags": fields.List(fields.Int())}, location="json")
     @marshal_with(NoteSchema, code=200)
     def put(self, note_id, **kwargs):
+        author = g.user
         note = NoteModel.query.get(note_id)
+        if note.author != author:
+            abort(403, error=f"Forbidden")
         for tag_id in kwargs["tags"]:
             tag = TagModel.query.get(tag_id)
+            if tag.author != author.username:
+                abort(403, error=f"Forbidden")
             note.tags.append(tag)
         note.save()
         return note, 200

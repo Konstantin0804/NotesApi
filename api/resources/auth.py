@@ -1,6 +1,6 @@
-from api import Resource, g, auth
+from api import Resource, g, auth, api
 
-
+@api.resource('/auth/token')
 class TokenResource(Resource):
     @auth.login_required
     def get(self):

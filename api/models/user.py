@@ -5,12 +5,15 @@ from itsdangerous import (TimedJSONWebSignatureSerializer
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.sql import expression
 
+#class ImageModel(db.Model):
+#    ...
 
 class UserModel(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(32), unique=True)
     password_hash = db.Column(db.String(128))
     notes = db.relationship('NoteModel', backref='author', lazy='dynamic')
+    # image = db.relationship('ImageModel', ) - можно реализовать так аватарку
     # FIXME: server_default=False
     is_staff = db.Column(db.Boolean(), default=False,
                         server_default=expression.false(), nullable=False) # колонка у класса, которая будет говорить является ли юзер админов

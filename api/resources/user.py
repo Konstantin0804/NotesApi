@@ -1,4 +1,4 @@
-from api import Resource, abort, reqparse, auth, db, g
+from api import Resource, abort, reqparse, auth, db, g, api
 from api.models.user import UserModel
 from api.models.note import NoteModel
 from api.schemas.user import user_schema, users_schema, UserSchema, UserRequestSchema
@@ -7,7 +7,7 @@ from flask_apispec import marshal_with, use_kwargs, doc
 from webargs import fields
 import logging
 
-
+@api.resource('/users/<int:user_id>')
 @doc(tags=['Users'])  # Декоратор для описания что делает данный класс в свагере
 class UserResource(MethodResource):
     @doc(
@@ -63,7 +63,7 @@ class UserResource(MethodResource):
         notes.delete()
         return user_dict, 200
 
-
+@api.resource('/users')
 @doc(tags=['Users'])
 class UsersListResource(MethodResource):
     @marshal_with(UserSchema(many=True))
@@ -82,3 +82,16 @@ class UsersListResource(MethodResource):
             abort(400, error=f"User with username:{user.username} already exist")
         logging.info("User created") # поставил логирование отработка функции добавления нового автора
         return user, 201
+
+@api.resource('/users/name')
+@doc(tags=['Users'])  # Декоратор для описания что делает данный класс в свагере
+class UserFilterResource(MethodResource):
+    @auth.login_required(role="admin")
+    @doc(description='Get users by filter name', security=[{"basicAuth": []}], summary="Get users by name")
+    @marshal_with(UserSchema(many=True))
+    @use_kwargs(UserSchema, location='query')
+    def get(self, **kwargs):
+        if kwargs.get("username") is not None:
+            kwargs_username = kwargs.get("username")
+            users = UserModel.query.filter(UserModel.username.ilike(f'%{kwargs_username}%'))
+        return users, 200

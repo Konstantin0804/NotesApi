@@ -34,3 +34,4 @@ class Config:
     APISPEC_SWAGGER_UI_URL = '/swagger-ui/'  # URI UI of API Doc
     UPLOAD_FOLDER_NAME = 'upload'
     UPLOAD_FOLDER = os.path.join(base_dir, UPLOAD_FOLDER_NAME)
+    LANGUAGES = ['en', 'ru']

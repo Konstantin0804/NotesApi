@@ -8,7 +8,6 @@ tags = db.Table('tags',
                 db.Column('note_model_id', db.Integer, db.ForeignKey('note_model.id'), primary_key=True)
                 )
 
-
 class NoteModel(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     author_id = db.Column(db.Integer, db.ForeignKey(UserModel.id))
