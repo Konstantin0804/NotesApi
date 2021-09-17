@@ -1,5 +1,6 @@
 from api import ma
 from api.models.user import UserModel
+from api.schemas.file import FileSchema
 
 
 #       schema        flask-restful
@@ -16,6 +17,12 @@ class UserSchema(ma.SQLAlchemySchema):
     username = ma.auto_field()
     is_staff = ma.auto_field()
     role = ma.auto_field()
+    photo = ma.Nested(FileSchema())
+
+    _links = ma.Hyperlinks({
+        'self': ma.URLFor('userresource', values=dict(user_id="<id>")),
+        'collection': ma.URLFor('userslistresource')
+    })
 
 class UserRequestSchema(ma.SQLAlchemySchema):
    class Meta:
@@ -24,6 +31,7 @@ class UserRequestSchema(ma.SQLAlchemySchema):
    username = ma.Str()
    password = ma.Str()
    role = ma.Str()
+   photo_id = ma.Integer(required=False)
 
 
 user_schema = UserSchema()

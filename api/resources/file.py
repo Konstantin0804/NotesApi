@@ -1,5 +1,7 @@
 import os
 from config import Config, ma_plugin
+from api.models.file import FileModel
+from api.schemas.file import FileSchema
 from flask_apispec.views import MethodResource
 from flask_apispec import marshal_with, doc, use_kwargs
 from marshmallow import fields
@@ -13,9 +15,12 @@ class FileField(fields.Raw):
 @api.resource('/upload')
 class UploadPictureResource(MethodResource):
    @use_kwargs({"image": FileField(required=True)}, location="files")
+   @marshal_with(FileSchema, code=201)
    def put(self, **kwargs):
        uploaded_file = kwargs["image"]
        target = os.path.join(Config.UPLOAD_FOLDER, uploaded_file.filename)
        uploaded_file.save(target)
-       return {"msg": "uploaded image successfully",
-               "url": os.path.join(Config.UPLOAD_FOLDER_NAME, uploaded_file.filename)}, 200
+       url = os.path.join(Config.UPLOAD_FOLDER_NAME, uploaded_file.filename)
+       file = FileModel(url=url)
+       file.save()
+       return file, 201

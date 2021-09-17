@@ -21,7 +21,7 @@ class NoteResource(MethodResource):
             note = NoteModel.get_all_for_user(author).filter_by(id=note_id).one()
             return note, 200
         except NoResultFound:
-            abort(404, error=_("Note with id=%(note_id) not found", note_id=note_id)) #так оборачивается для перевода с помощью babel
+            abort(404, error=_("Note with id=%(note_id)s not found", note_id=note_id)) #так оборачивается для перевода с помощью babel
 
 
     @auth.login_required

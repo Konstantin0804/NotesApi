@@ -4,6 +4,7 @@ from itsdangerous import (TimedJSONWebSignatureSerializer
                           as Serializer, BadSignature, SignatureExpired)
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.sql import expression
+from api.models.file import FileModel
 
 #class ImageModel(db.Model):
 #    ...
@@ -18,11 +19,14 @@ class UserModel(db.Model):
     is_staff = db.Column(db.Boolean(), default=False,
                         server_default=expression.false(), nullable=False) # колонка у класса, которая будет говорить является ли юзер админов
     role = db.Column(db.String(32), default="simple_user", server_default="admin", nullable=False)
+    photo_id = db.Column(db.Integer, db.ForeignKey("file_model.id"), nullable=True)
+    photo = db.relationship(FileModel, backref="user", uselist=False, lazy='joined')
 
-    def __init__(self, username, password, role="admin"):
-        self.username = username
+    def __init__(self, **kwargs):
+        password = kwargs["password"]
+        del kwargs["password"]
+        super().__init__(**kwargs)
         self.hash_password(password)
-        self.role = role
 
     def hash_password(self, password):
         self.password_hash = pwd_context.encrypt(password)

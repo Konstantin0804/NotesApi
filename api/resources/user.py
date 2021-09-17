@@ -2,6 +2,7 @@ from api import Resource, abort, reqparse, auth, db, g, api
 from api.models.user import UserModel
 from api.models.note import NoteModel
 from api.schemas.user import user_schema, users_schema, UserSchema, UserRequestSchema
+from api.schemas.file import FileModel
 from flask_apispec.views import MethodResource
 from flask_apispec import marshal_with, use_kwargs, doc
 from webargs import fields
@@ -83,15 +84,30 @@ class UsersListResource(MethodResource):
         logging.info("User created") # поставил логирование отработка функции добавления нового автора
         return user, 201
 
+    @use_kwargs(UserRequestSchema, location='json')
+    @doc(description='Create user by id')
+    @marshal_with(UserSchema, code=201)
+    def post(self, **kwargs):
+        if kwargs.get("photo_id"):
+            photo_id = kwargs["photo_id"]
+            del kwargs["photo_id"]
+            photo = FileModel.query.get(photo_id)
+            kwargs["photo"] = photo
+        user = UserModel(**kwargs)
+        user.save()
+        if not user.id:
+            abort(400, error=f"User with username:{user.username} already exist")
+        logging.info("User create!!!")
+        return user, 201
+
 @api.resource('/users/name')
 @doc(tags=['Users'])  # Декоратор для описания что делает данный класс в свагере
 class UserFilterResource(MethodResource):
     @auth.login_required(role="admin")
     @doc(description='Get users by filter name', security=[{"basicAuth": []}], summary="Get users by name")
     @marshal_with(UserSchema(many=True))
-    @use_kwargs(UserSchema, location='query')
+    @use_kwargs(({"username": fields.Str()}), location='query')
     def get(self, **kwargs):
         if kwargs.get("username") is not None:
-            kwargs_username = kwargs.get("username")
-            users = UserModel.query.filter(UserModel.username.ilike(f'%{kwargs_username}%'))
+            users = UserModel.query.filter(UserModel.username.ilike(f'%{kwargs.get("username")}%'))
         return users, 200
