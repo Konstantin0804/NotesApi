@@ -83,14 +83,12 @@ class NotesListResource(MethodResource):
     @auth.login_required
     @doc(description="Get user's notes", security=[{"basicAuth": []}], summary="Get notes")
     @marshal_with(NoteSchema(many=True))
-    @use_kwargs(NoteFilterchema, location='query')
+    @use_kwargs(({"tags": fields.Str()}), location='query')
     def get(self, **kwargs):
         author = g.user
         notes = NoteModel.get_all_for_user(author)
-        if kwargs.get("tag") is not None:
-            notes = notes.filter(NoteModel.tags.any(name=kwargs['tag']))
-        if kwargs.get("private") is not None:
-            notes = notes.filter_by(private=kwargs['private'])
+        if kwargs.get("tags") is not None:
+            notes = notes.filter(NoteModel.tags.any(name=kwargs['tags']))
         return notes, 200
 
     @auth.login_required
