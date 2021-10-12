@@ -1,6 +1,6 @@
-from api import auth, abort, g, Resource, reqparse, api
+from api import auth, abort, g, api
 from api.models.tags import TagModel
-from api.schemas.tags import tag_schema, tags_schema, TagSchema
+from api.schemas.tags import TagSchema
 from flask_apispec.views import MethodResource
 from flask_apispec import marshal_with, use_kwargs, doc
 from webargs import fields

@@ -101,7 +101,7 @@ class UsersListResource(MethodResource):
         return user, 201
 
 @api.resource('/users/name')
-@doc(tags=['Users'])  # Декоратор для описания что делает данный класс в свагере
+@doc(tags=['Users'])
 class UserFilterResource(MethodResource):
     @auth.login_required(role="admin")
     @doc(description='Get users by filter name', security=[{"basicAuth": []}], summary="Get users by name")

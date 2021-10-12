@@ -6,8 +6,6 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.sql import expression
 from api.models.file import FileModel
 
-#class ImageModel(db.Model):
-#    ...
 
 class UserModel(db.Model):
     id = db.Column(db.Integer, primary_key=True)
